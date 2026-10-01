@@ -60,10 +60,12 @@ func NewLeaseRequestIdentity(planID string, input LeaseInput) LeaseRequestIdenti
 
 func (identity LeaseRequestIdentity) FingerprintPayload() string {
 	return fmt.Sprintf(
-		"%s|%s|%s",
+		"%s|%s|%s|%d|%d",
 		identity.PlanID,
 		identity.RequestKey,
 		identity.Region,
+		identity.LeaseSeconds,
+		identity.MaxNodes,
 	)
 }
 
