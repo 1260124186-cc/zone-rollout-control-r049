@@ -31,7 +31,6 @@ func Open(path string) (*Store, error) {
 			return nil, fmt.Errorf("decode snapshot: %w", err)
 		}
 		state = normalize(state)
-		compactLeaseGroups(&state)
 	case errors.Is(err, os.ErrNotExist):
 		if err := replaceFile(path, state); err != nil {
 			return nil, fmt.Errorf("initialize snapshot: %w", err)
@@ -116,30 +115,6 @@ func copyState(source *domain.State) (domain.State, error) {
 		return domain.State{}, err
 	}
 	return normalize(copied), nil
-}
-
-func compactLeaseGroups(state *domain.State) {
-	for groupID, group := range state.LeaseGroups {
-		compacted := make([]string, 0, len(group.LeaseIDs))
-		for _, leaseID := range group.LeaseIDs {
-			lease, ok := state.Leases[leaseID]
-			if !ok {
-				continue
-			}
-			if lease.AllocationID != groupID || lease.PlanID != group.PlanID {
-				continue
-			}
-			if lease.State != domain.LeaseClaimed {
-				continue
-			}
-			compacted = append(compacted, leaseID)
-		}
-		if len(compacted) == len(group.LeaseIDs) {
-			continue
-		}
-		group.LeaseIDs = compacted
-		state.LeaseGroups[groupID] = group
-	}
 }
 
 func AddAudit(

@@ -58,7 +58,7 @@ func (s *Service) Allocate(
 					"request_key": input.RequestKey,
 				})
 			}
-			group = replayLeaseGroup(state, existing)
+			group = existing
 			return nil
 		}
 
@@ -127,25 +127,6 @@ func (s *Service) Allocate(
 		return nil
 	})
 	return group, err
-}
-
-func replayLeaseGroup(state *domain.State, group domain.LeaseGroup) domain.LeaseGroup {
-	leaseIDs := make([]string, 0, len(group.LeaseIDs))
-	for _, leaseID := range group.LeaseIDs {
-		lease, ok := state.Leases[leaseID]
-		if !ok {
-			continue
-		}
-		if lease.AllocationID != group.ID || lease.PlanID != group.PlanID {
-			continue
-		}
-		if lease.State != domain.LeaseClaimed {
-			continue
-		}
-		leaseIDs = append(leaseIDs, leaseID)
-	}
-	group.LeaseIDs = leaseIDs
-	return group
 }
 
 func (s *Service) Release(ctx context.Context, leaseID string) (domain.NodeLease, error) {
